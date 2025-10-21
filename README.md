@@ -30,16 +30,16 @@ graph TD
     I -->|"Health Check Passes"| J["🎉 System Resolved"]
     J -->|"Continuous Monitoring"| B
     
-    style A fill:#e1f5ff
-    style B fill:#fff3e0
-    style C fill:#fff3e0
-    style D fill:#f3e5f5
-    style E fill:#f3e5f5
-    style F fill:#f3e5f5
-    style G fill:#e8f5e9
-    style H fill:#e8f5e9
-    style I fill:#e1f5ff
-    style J fill:#c8e6c9
+    style A fill:#2563eb,stroke:#1e40af,stroke-width:2px,color:#ffffff
+    style B fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#ffffff
+    style C fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#ffffff
+    style D fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#ffffff
+    style E fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#ffffff
+    style F fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#ffffff
+    style G fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#ffffff
+    style H fill:#16a34a,stroke:#15803d,stroke-width:2px,color:#ffffff
+    style I fill:#2563eb,stroke:#1e40af,stroke-width:2px,color:#ffffff
+    style J fill:#059669,stroke:#047857,stroke-width:2px,color:#ffffff
 ```
 
 ## Architecture
