@@ -1,6 +1,9 @@
 package com.joranbergfeld.agentic_devops_demo.controller;
 
 import com.joranbergfeld.agentic_devops_demo.service.TodoService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class CreateTodoController {
 
     private final TodoService todoService;
+    private final Logger log = LoggerFactory.getLogger(CreateTodoController.class);
 
     public CreateTodoController(TodoService todoService) {
         this.todoService = todoService;
@@ -28,6 +32,8 @@ public class CreateTodoController {
      */
     @GetMapping
     public String showCreatePage() {
+        //TODO: Implement the method to return the create todo view
+        log.error("CreateTodoController.showCreatePage() not implemented yet");
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
@@ -39,11 +45,8 @@ public class CreateTodoController {
      * @return
      */
     @PostMapping
-    public String createTodo(
-            @RequestParam(name = "title") String title,
-            @RequestParam(name = "description", required = false) String description,
-            RedirectAttributes redirectAttributes) {
-        
+    public String createTodo(@RequestParam(name = "title") String title, @RequestParam(name = "description", required = false) String description, RedirectAttributes redirectAttributes) {
+        log.info("API to create todo called.");
         String todoText = description != null && !description.trim().isEmpty()
                 ? title + " - " + description
                 : title;
