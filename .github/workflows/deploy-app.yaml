@@ -1,0 +1,106 @@
+name: Deploy app
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+env:
+  ACA_RESOURCE_GROUP: ${{ secrets.ACA_RESOURCE_GROUP || 'rg-agentic-devops' }}
+  ACA_CONTAINER_APP_NAME: ${{ secrets.ACA_CONTAINER_APP_NAME || 'aca-agentic-devops-app' }}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deliver_artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: 'Login via Azure CLI'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: 'Login to ACR'
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+      - name: 'Build Spring Boot image'
+        run: |
+          ./mvnw spring-boot:build-image \
+            -Dspring-boot.build-image.imageName=${{ secrets.REGISTRY_LOGIN_SERVER }}/aca-agentic-devops-app:${{ github.sha }}
+
+      - name: 'Tag and push image'
+        run: |
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/aca-agentic-devops-app:${{ github.sha }}
+          docker tag ${{ secrets.REGISTRY_LOGIN_SERVER }}/aca-agentic-devops-app:${{ github.sha }} \
+                     ${{ secrets.REGISTRY_LOGIN_SERVER }}/aca-agentic-devops-app:latest
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/aca-agentic-devops-app:latest
+
+      - name: 'Deploy to Azure Container Apps'
+        id: aca_deployment
+        run: |
+          REVISION_NAME="${{ env.ACA_CONTAINER_APP_NAME }}--${{ github.run_number }}-${{ github.run_attempt }}"
+          
+          echo "=== Container App Deployment ==="
+          echo "Container App: ${{ env.ACA_CONTAINER_APP_NAME }}"
+          echo "Resource Group: ${{ env.ACA_RESOURCE_GROUP }}"
+          echo "Revision name: ${REVISION_NAME}"
+          echo "Image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/aca-agentic-devops-app:${{ github.sha }}"
+          
+          # Check if Container App exists
+          echo "=== Checking if Container App exists ==="
+          if az containerapp show --name ${{ env.ACA_CONTAINER_APP_NAME }} --resource-group ${{ env.ACA_RESOURCE_GROUP }} >/dev/null 2>&1; then
+            echo "✅ Container App exists, proceeding with update..."
+            
+            # Update the existing Container App
+            echo "=== Updating Container App ==="
+            az containerapp update \
+              --name ${{ env.ACA_CONTAINER_APP_NAME }} \
+              --resource-group ${{ env.ACA_RESOURCE_GROUP }} \
+              --image ${{ secrets.REGISTRY_LOGIN_SERVER }}/aca-agentic-devops-app:${{ github.sha }} \
+              --revision-suffix ${{ github.run_number }}-${{ github.run_attempt }}
+            
+            echo "✅ Container App updated successfully!"
+            
+          else
+            echo "❌ Container App '${{ env.ACA_CONTAINER_APP_NAME }}' does not exist in resource group '${{ env.ACA_RESOURCE_GROUP }}'"
+            echo "Available Container Apps in this resource group:"
+            az containerapp list --resource-group ${{ env.ACA_RESOURCE_GROUP }} --query "[].name" -o table || echo "No Container Apps found or no access to resource group"
+            exit 1
+          fi
+          
+          # Get the application URL
+          APP_URL=$(az containerapp show \
+            --name ${{ env.ACA_CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.ACA_RESOURCE_GROUP }} \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv)
+          
+          echo "app-url=https://${APP_URL}" >> $GITHUB_OUTPUT
+          echo "revision-name=${REVISION_NAME}" >> $GITHUB_OUTPUT
+
+      - name: 'Display deployment info'
+        run: |
+          echo "🎉 Deployment completed successfully!"
+          echo "📱 Application URL: ${{ steps.aca_deployment.outputs.app-url }}"
+          echo "🔄 Revision name: ${{ steps.aca_deployment.outputs.revision-name }}"
