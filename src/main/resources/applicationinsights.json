@@ -5,8 +5,5 @@
   "sampling": {
     "percentage": 50
   },
-  "preview": {
-    "capture-http-host-header": true
-  },
   "connectionString": "${APPLICATIONINSIGHTS_CONNECTION_STRING}"
 }
