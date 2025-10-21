@@ -28,13 +28,12 @@ public class CreateTodoController {
 
     /**
      * Displays the create todo page.
-     * @return
+     * @return the create-todo view name
      */
     @GetMapping
     public String showCreatePage() {
-        //TODO: Implement the method to return the create todo view
-        log.error("CreateTodoController.showCreatePage() not implemented yet");
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.info("Create todo page requested");
+        return "create-todo";
     }
 
     /**
