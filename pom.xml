@@ -55,6 +55,12 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.microsoft.azure/applicationinsights-runtime-attach -->
+		<dependency>
+			<groupId>com.microsoft.azure</groupId>
+			<artifactId>applicationinsights-runtime-attach</artifactId>
+			<version>3.7.5</version>
+		</dependency>
 	</dependencies>
 
 	<build>
